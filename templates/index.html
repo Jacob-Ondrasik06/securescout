@@ -54,35 +54,39 @@
 
       <p class="text-sm text-gray-500 mb-12">No technical knowledge required. Results in under 5 minutes.</p>
 
-      <!-- Email capture -->
-      <div id="waitlist" class="max-w-lg mx-auto">
+      <!-- Scan form -->
+      <div class="max-w-xl mx-auto">
         <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 glow">
           <p class="text-sm text-green-400 font-medium mono mb-4">
-            <span class="terminal-line">Early access — launching soon</span>
+            <span class="terminal-line">Free scan — no account needed</span>
           </p>
-          <div class="flex gap-3">
-            <input
-              id="email-input"
-              type="email"
-              placeholder="your@email.com"
-              class="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-colors text-sm"
-            />
-            <button
-              onclick="joinWaitlist()"
-              class="bg-green-500 text-gray-950 px-5 py-3 rounded-lg font-semibold hover:bg-green-400 transition-colors text-sm whitespace-nowrap"
-            >
-              Get early access
-            </button>
-          </div>
-          <p id="join-msg" class="text-xs text-gray-500 mt-3 min-h-[16px]">
+          <form action="/scan" method="POST">
+            <div class="flex gap-3">
+              <input
+                name="url"
+                type="text"
+                placeholder="https://yourdomain.com"
+                class="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-colors text-sm"
+              />
+              <button
+                type="submit"
+                class="bg-green-500 text-gray-950 px-5 py-3 rounded-lg font-semibold hover:bg-green-400 transition-colors text-sm whitespace-nowrap"
+              >
+                Scan my site
+              </button>
+            </div>
+          </form>
+          <p class="text-xs text-gray-500 mt-3">
+            Checks SSL, security headers, exposed files, DNS records &amp; more.
             {% if signups > 0 %}
-              <span class="text-green-400">{{ signups }} people already on the list.</span> No spam, ever.
-            {% else %}
-              No spam, ever. Unsubscribe anytime.
+              <span class="text-green-400 ml-1">{{ signups }} people on the waitlist.</span>
             {% endif %}
           </p>
         </div>
       </div>
+
+      <!-- Waitlist anchor for CTAs deeper in the page -->
+      <div id="waitlist"></div>
     </div>
   </section>
 

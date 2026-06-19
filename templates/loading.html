@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scanning {{ url }} — SecureScout</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    .cursor { animation: blink 1s infinite; }
+    @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .log-line { animation: fadein 0.3s ease forwards; opacity: 0; }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex items-center justify-center">
+  <div class="w-full max-w-2xl px-6">
+
+    <div class="flex items-center gap-3 mb-8">
+      <div class="w-7 h-7 bg-green-500 rounded flex items-center justify-center">
+        <svg class="w-4 h-4 text-gray-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      </div>
+      <span class="font-semibold text-white">SecureScout</span>
+    </div>
+
+    <div class="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
+      <div class="flex items-center gap-2 px-4 py-3 border-b border-gray-800 bg-gray-950">
+        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+        <span class="mono text-xs text-gray-500 ml-2">securescout — active scan</span>
+      </div>
+
+      <div class="p-6 mono text-sm space-y-2" id="log">
+        <p class="text-green-400">> securescout scan {{ url }}</p>
+        <p class="text-gray-500 log-line" style="animation-delay:0.3s">Resolving target...</p>
+        <p class="text-gray-400 log-line" style="animation-delay:1.2s">Running SSL/TLS check...</p>
+        <p class="text-gray-400 log-line" style="animation-delay:2.0s">Checking security headers...</p>
+        <p class="text-gray-400 log-line" style="animation-delay:2.8s">Probing sensitive file paths...</p>
+        <p class="text-gray-400 log-line" style="animation-delay:3.6s">Verifying DNS records...</p>
+        <p class="text-gray-500 log-line" id="done-line" style="animation-delay:4.5s; display:none;">Analyzing findings...</p>
+      </div>
+
+      <div class="px-6 pb-6 flex items-center gap-3 mono text-sm text-gray-400">
+        <div class="flex gap-1">
+          <div class="w-2 h-2 rounded-full bg-green-500 animate-bounce" style="animation-delay:0ms"></div>
+          <div class="w-2 h-2 rounded-full bg-green-500 animate-bounce" style="animation-delay:150ms"></div>
+          <div class="w-2 h-2 rounded-full bg-green-500 animate-bounce" style="animation-delay:300ms"></div>
+        </div>
+        <span id="status-text">Scanning in progress</span>
+      </div>
+    </div>
+
+    <p class="text-center text-gray-600 text-xs mt-6">This usually takes 10–20 seconds</p>
+  </div>
+
+  <script>
+    const scanId = "{{ scan_id }}";
+
+    setTimeout(() => {
+      document.getElementById('done-line').style.display = 'block';
+    }, 4500);
+
+    async function pollScan() {
+      try {
+        const res = await fetch(`/scan/run/${scanId}`);
+        const data = await res.json();
+        if (data.done) {
+          document.getElementById('status-text').textContent = 'Scan complete — loading results...';
+          window.location.href = `/results/${scanId}`;
+        } else {
+          setTimeout(pollScan, 2000);
+        }
+      } catch {
+        setTimeout(pollScan, 3000);
+      }
+    }
+
+    setTimeout(pollScan, 1500);
+  </script>
+</body>
+</html>
