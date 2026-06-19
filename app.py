@@ -1,29 +1,39 @@
-from flask import Flask, render_template, request, jsonify
-import json
 import os
-from datetime import datetime
+import psycopg2
+from flask import Flask, render_template, request, jsonify
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
-WAITLIST_FILE = "waitlist.json"
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
-def load_waitlist():
-    if os.path.exists(WAITLIST_FILE):
-        with open(WAITLIST_FILE, "r") as f:
-            return json.load(f)
-    return []
+def get_db():
+    return psycopg2.connect(DATABASE_URL)
 
 
-def save_waitlist(data):
-    with open(WAITLIST_FILE, "w") as f:
-        json.dump(data, f, indent=2)
+def init_db():
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS waitlist (
+                    id SERIAL PRIMARY KEY,
+                    email TEXT UNIQUE NOT NULL,
+                    joined TIMESTAMP DEFAULT NOW()
+                )
+            """)
+        conn.commit()
 
 
 @app.route("/")
 def index():
-    waitlist = load_waitlist()
-    return render_template("index.html", signups=len(waitlist))
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM waitlist")
+            signups = cur.fetchone()[0]
+    return render_template("index.html", signups=signups)
 
 
 @app.route("/join", methods=["POST"])
@@ -34,16 +44,20 @@ def join():
     if not email or "@" not in email:
         return jsonify({"success": False, "message": "Please enter a valid email."})
 
-    waitlist = load_waitlist()
-
-    if any(e["email"] == email for e in waitlist):
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("INSERT INTO waitlist (email) VALUES (%s)", (email,))
+            conn.commit()
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) FROM waitlist")
+                count = cur.fetchone()[0]
+        return jsonify({"success": True, "message": f"You're in! {count} people on the waitlist."})
+    except psycopg2.errors.UniqueViolation:
         return jsonify({"success": False, "message": "You're already on the list!"})
-
-    waitlist.append({"email": email, "joined": datetime.utcnow().isoformat()})
-    save_waitlist(waitlist)
-
-    return jsonify({"success": True, "message": f"You're in! {len(waitlist)} people on the waitlist."})
 
 
 if __name__ == "__main__":
+    init_db()
     app.run(debug=True)
