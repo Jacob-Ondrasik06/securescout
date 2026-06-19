@@ -38,6 +38,10 @@ def init_db():
         conn.commit()
 
 
+# Called at import time so gunicorn initialises the DB on startup
+init_db()
+
+
 @app.route("/")
 def index():
     with get_db() as conn:
@@ -123,8 +127,3 @@ def results(scan_id):
 
     url, result = row
     return render_template("results.html", result=result, scan_id=scan_id)
-
-
-if __name__ == "__main__":
-    init_db()
-    app.run(debug=True)
