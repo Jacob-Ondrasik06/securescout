@@ -38,8 +38,15 @@ def init_db():
         conn.commit()
 
 
-# Called at import time so gunicorn initialises the DB on startup
-init_db()
+try:
+    init_db()
+except Exception as e:
+    print(f"[warn] init_db failed: {e}")
+
+
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok"}), 200
 
 
 @app.route("/")
