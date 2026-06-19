@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SecureScout — Web Vulnerability Scanner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .glow { box-shadow: 0 0 40px rgba(34, 197, 94, 0.15); }
+    .terminal-line::before { content: '> '; color: #22c55e; }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+
+  <!-- Nav -->
+  <nav class="border-b border-gray-800 px-6 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 bg-green-500 rounded flex items-center justify-center">
+          <svg class="w-4 h-4 text-gray-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <span class="font-semibold text-white text-lg tracking-tight">SecureScout</span>
+      </div>
+      <div class="flex items-center gap-6 text-sm text-gray-400">
+        <a href="#features" class="hover:text-white transition-colors">Features</a>
+        <a href="#pricing" class="hover:text-white transition-colors">Pricing</a>
+        <a href="#waitlist" class="bg-green-500 text-gray-950 px-4 py-1.5 rounded-md font-medium hover:bg-green-400 transition-colors">Get early access</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="px-6 pt-24 pb-20 text-center">
+    <div class="max-w-4xl mx-auto">
+      <div class="inline-flex items-center gap-2 bg-gray-900 border border-gray-700 rounded-full px-4 py-1.5 text-sm text-gray-400 mb-8">
+        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+        Built in public by <span class="text-green-400 font-medium ml-1">Jacob Ondrasik</span> — follow the journey on X
+      </div>
+
+      <h1 class="text-5xl font-bold text-white leading-tight mb-6">
+        Is your website
+        <span class="text-green-400"> wide open</span>
+        <br />to attackers?
+      </h1>
+
+      <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-4">
+        SecureScout scans your website for real vulnerabilities — SQL injection, XSS, exposed files, weak SSL, and more — then gives you a clear report with exactly how to fix them.
+      </p>
+
+      <p class="text-sm text-gray-500 mb-12">No technical knowledge required. Results in under 5 minutes.</p>
+
+      <!-- Email capture -->
+      <div id="waitlist" class="max-w-lg mx-auto">
+        <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 glow">
+          <p class="text-sm text-green-400 font-medium mono mb-4">
+            <span class="terminal-line">Early access — launching soon</span>
+          </p>
+          <div class="flex gap-3">
+            <input
+              id="email-input"
+              type="email"
+              placeholder="your@email.com"
+              class="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-colors text-sm"
+            />
+            <button
+              onclick="joinWaitlist()"
+              class="bg-green-500 text-gray-950 px-5 py-3 rounded-lg font-semibold hover:bg-green-400 transition-colors text-sm whitespace-nowrap"
+            >
+              Get early access
+            </button>
+          </div>
+          <p id="join-msg" class="text-xs text-gray-500 mt-3 min-h-[16px]">
+            {% if signups > 0 %}
+              <span class="text-green-400">{{ signups }} people already on the list.</span> No spam, ever.
+            {% else %}
+              No spam, ever. Unsubscribe anytime.
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Terminal demo -->
+  <section class="px-6 pb-24">
+    <div class="max-w-3xl mx-auto">
+      <div class="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
+        <div class="flex items-center gap-2 px-4 py-3 border-b border-gray-800 bg-gray-950">
+          <div class="w-3 h-3 rounded-full bg-red-500"></div>
+          <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+          <div class="w-3 h-3 rounded-full bg-green-500"></div>
+          <span class="text-xs text-gray-500 mono ml-2">securescout — scan results</span>
+        </div>
+        <div class="p-6 mono text-sm space-y-2 text-gray-300">
+          <p class="text-green-400">> securescout scan https://example-business.com</p>
+          <p class="text-gray-500">Scanning target... please wait</p>
+          <br />
+          <p><span class="text-red-400 font-medium">[CRITICAL]</span> SQL injection detected in /search?q= parameter</p>
+          <p><span class="text-red-400 font-medium">[CRITICAL]</span> .env file exposed at /.env (contains DB credentials)</p>
+          <p><span class="text-yellow-400 font-medium">[HIGH]   </span> Missing Content-Security-Policy header</p>
+          <p><span class="text-yellow-400 font-medium">[HIGH]   </span> SSL certificate expires in 7 days</p>
+          <p><span class="text-yellow-400 font-medium">[HIGH]   </span> Admin panel exposed at /admin (no auth check)</p>
+          <p><span class="text-blue-400 font-medium">[MED]    </span> X-Frame-Options header not set (clickjacking risk)</p>
+          <p><span class="text-blue-400 font-medium">[MED]    </span> WordPress version 5.8 detected (EOL, 12 known CVEs)</p>
+          <p><span class="text-gray-400 font-medium">[LOW]    </span> HSTS not enabled</p>
+          <br />
+          <p class="text-gray-500">────────────────────────────────────────</p>
+          <p><span class="text-white">Risk score:</span> <span class="text-red-400 font-medium">87/100 (CRITICAL)</span></p>
+          <p><span class="text-white">Report:</span> <span class="text-green-400">securescout_report_2026-06-18.pdf</span></p>
+          <p class="text-gray-500">Scan complete in 4m 12s</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="px-6 pb-24 border-t border-gray-800 pt-24">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl font-bold text-white mb-4">Everything your website is hiding from you</h2>
+        <p class="text-gray-400">SecureScout checks for the vulnerabilities attackers actually exploit</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {% set features = [
+          ("🔒", "SSL & TLS", "Expired certs, weak ciphers, and misconfigs that expose your users' data"),
+          ("🛡️", "Security headers", "Missing CSP, HSTS, X-Frame-Options and other headers attackers love"),
+          ("💉", "SQL injection", "Detects injectable parameters before an attacker finds them first"),
+          ("📜", "XSS detection", "Reflected cross-site scripting in forms and URL parameters"),
+          ("📁", "Exposed files", ".env files, backups, admin panels, and sensitive paths left open"),
+          ("🌐", "DNS security", "SPF, DMARC misconfigs that let attackers spoof your email domain"),
+          ("🔍", "CMS fingerprint", "Outdated WordPress, Drupal, and plugin versions with known CVEs"),
+          ("🚪", "Open ports", "Services and admin interfaces that shouldn't be publicly reachable"),
+        ] %}
+        {% for icon, title, desc in features %}
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-gray-600 transition-colors">
+          <div class="text-2xl mb-3">{{ icon }}</div>
+          <h3 class="font-semibold text-white mb-2 text-sm">{{ title }}</h3>
+          <p class="text-gray-500 text-xs leading-relaxed">{{ desc }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing" class="px-6 pb-24 border-t border-gray-800 pt-24">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl font-bold text-white mb-4">Simple pricing</h2>
+        <p class="text-gray-400">Enterprise-grade security checks. Small business prices.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <p class="text-sm text-gray-400 font-medium mb-2">Free</p>
+          <p class="text-3xl font-bold text-white mb-1">$0</p>
+          <p class="text-xs text-gray-500 mb-6">forever</p>
+          <ul class="space-y-3 text-sm text-gray-400 mb-8">
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> 1 scan per month</li>
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Basic results summary</li>
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> SSL + headers check</li>
+            <li class="flex items-center gap-2"><span class="text-gray-600">✗</span> PDF report</li>
+            <li class="flex items-center gap-2"><span class="text-gray-600">✗</span> Full vuln details</li>
+          </ul>
+          <a href="#waitlist" class="block text-center border border-gray-700 text-gray-300 px-4 py-2.5 rounded-lg text-sm hover:border-gray-500 transition-colors">Get started free</a>
+        </div>
+
+        <div class="bg-gray-900 border-2 border-green-500 rounded-xl p-6 relative">
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-gray-950 text-xs font-semibold px-3 py-1 rounded-full">Most popular</div>
+          <p class="text-sm text-green-400 font-medium mb-2">Pro</p>
+          <p class="text-3xl font-bold text-white mb-1">$49</p>
+          <p class="text-xs text-gray-500 mb-6">per month</p>
+          <ul class="space-y-3 text-sm text-gray-300 mb-8">
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> 10 scans per month</li>
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Full PDF report</li>
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> All vulnerability checks</li>
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Email alerts</li>
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Remediation guidance</li>
+          </ul>
+          <a href="#waitlist" class="block text-center bg-green-500 text-gray-950 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-400 transition-colors">Join waitlist</a>
+        </div>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <p class="text-sm text-gray-400 font-medium mb-2">Agency</p>
+          <p class="text-3xl font-bold text-white mb-1">$199</p>
+          <p class="text-xs text-gray-500 mb-6">per month</p>
+          <ul class="space-y-3 text-sm text-gray-400 mb-8">
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Unlimited scans</li>
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> White-label PDF reports</li>
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> API access</li>
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Client management dashboard</li>
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Priority support</li>
+          </ul>
+          <a href="#waitlist" class="block text-center border border-gray-700 text-gray-300 px-4 py-2.5 rounded-lg text-sm hover:border-gray-500 transition-colors">Contact us</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Builder section -->
+  <section class="px-6 pb-24 border-t border-gray-800 pt-24">
+    <div class="max-w-2xl mx-auto text-center">
+      <div class="w-16 h-16 rounded-full bg-gray-800 border border-gray-700 mx-auto mb-6 flex items-center justify-center text-2xl">👨‍💻</div>
+      <h2 class="text-2xl font-bold text-white mb-4">Built in public by Jacob Ondrasik</h2>
+      <p class="text-gray-400 leading-relaxed mb-6">
+        I'm a self-taught developer from Bellefonte, PA building SecureScout from scratch and sharing every step — the code, the revenue, and the mistakes. No VC funding, no team. Just Python, AI tools, and a genuine belief that small businesses deserve affordable security.
+      </p>
+      <a href="https://x.com" target="_blank" class="inline-flex items-center gap-2 text-sm text-green-400 hover:text-green-300 transition-colors">
+        Follow the build on X →
+      </a>
+    </div>
+  </section>
+
+  <!-- Bottom CTA -->
+  <section class="px-6 pb-24">
+    <div class="max-w-2xl mx-auto text-center bg-gray-900 border border-gray-700 rounded-2xl p-12">
+      <h2 class="text-2xl font-bold text-white mb-3">Get early access</h2>
+      <p class="text-gray-400 mb-8">Join the waitlist. Early members get 3 months free when we launch.</p>
+      <div class="flex gap-3 max-w-md mx-auto">
+        <input
+          id="email-input-2"
+          type="email"
+          placeholder="your@email.com"
+          class="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-colors text-sm"
+        />
+        <button
+          onclick="joinWaitlist2()"
+          class="bg-green-500 text-gray-950 px-5 py-3 rounded-lg font-semibold hover:bg-green-400 transition-colors text-sm"
+        >
+          Join
+        </button>
+      </div>
+      <p id="join-msg-2" class="text-xs text-gray-500 mt-3 min-h-[16px]">No spam, ever.</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-gray-800 px-6 py-8">
+    <div class="max-w-6xl mx-auto flex items-center justify-between text-sm text-gray-500">
+      <div class="flex items-center gap-2">
+        <div class="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
+          <svg class="w-3 h-3 text-gray-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <span>SecureScout</span>
+      </div>
+      <span>© 2026 Jacob Ondrasik. Built in public.</span>
+    </div>
+  </footer>
+
+  <script>
+    async function joinWaitlist() {
+      const email = document.getElementById('email-input').value;
+      const msg = document.getElementById('join-msg');
+      await submitEmail(email, msg);
+    }
+
+    async function joinWaitlist2() {
+      const email = document.getElementById('email-input-2').value;
+      const msg = document.getElementById('join-msg-2');
+      await submitEmail(email, msg);
+    }
+
+    async function submitEmail(email, msgEl) {
+      if (!email) { msgEl.textContent = 'Please enter your email.'; msgEl.className = 'text-xs text-red-400 mt-3 min-h-[16px]'; return; }
+      const res = await fetch('/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      msgEl.textContent = data.message;
+      msgEl.className = `text-xs mt-3 min-h-[16px] ${data.success ? 'text-green-400' : 'text-yellow-400'}`;
+    }
+
+    document.getElementById('email-input').addEventListener('keydown', e => { if (e.key === 'Enter') joinWaitlist(); });
+    document.getElementById('email-input-2').addEventListener('keydown', e => { if (e.key === 'Enter') joinWaitlist2(); });
+  </script>
+</body>
+</html>
