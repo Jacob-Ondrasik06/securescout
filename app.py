@@ -5,12 +5,15 @@ import psycopg2
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from dotenv import load_dotenv
 from scanner.engine import run_scan
+from mailer import send_email, build_report_email
 
 load_dotenv()
 
 app = Flask(__name__)
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
+BASE_URL = os.environ.get("BASE_URL", "").rstrip("/")
+ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
 
 
 def get_db():
@@ -32,6 +35,16 @@ def init_db():
                     id TEXT PRIMARY KEY,
                     url TEXT NOT NULL,
                     result JSONB,
+                    created TIMESTAMP DEFAULT NOW()
+                )
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS leads (
+                    id SERIAL PRIMARY KEY,
+                    email TEXT NOT NULL,
+                    scan_id TEXT,
+                    url TEXT,
+                    emailed BOOLEAN DEFAULT FALSE,
                     created TIMESTAMP DEFAULT NOW()
                 )
             """)
@@ -134,3 +147,61 @@ def results(scan_id):
 
     url, result = row
     return render_template("results.html", result=result, scan_id=scan_id)
+
+
+@app.route("/email-results", methods=["POST"])
+def email_results():
+    data = request.get_json() or {}
+    email = data.get("email", "").strip().lower()
+    scan_id = data.get("scan_id", "").strip()
+
+    if not email or "@" not in email:
+        return jsonify({"success": False, "message": "Please enter a valid email."})
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT url, result FROM scans WHERE id = %s", (scan_id,))
+            row = cur.fetchone()
+
+    if not row or not row[1]:
+        return jsonify({"success": False, "message": "Scan not found. Try running it again."})
+
+    url, result = row
+
+    # Capture the lead first — this is the part that matters for the business,
+    # so it happens even if email delivery isn't configured yet.
+    html = build_report_email(result, scan_id, BASE_URL)
+    sent, _ = send_email(email, f"Your SecureScout report for {result['domain']}", html)
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO leads (email, scan_id, url, emailed) VALUES (%s, %s, %s, %s)",
+                (email, scan_id, url, sent),
+            )
+        conn.commit()
+
+    if sent:
+        return jsonify({"success": True, "message": "Sent! Check your inbox for the full report."})
+    return jsonify({"success": True, "message": "Got it — your report is on the way."})
+
+
+@app.route("/admin/leads")
+def admin_leads():
+    if not ADMIN_KEY or request.args.get("key") != ADMIN_KEY:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT email, url, emailed, created
+                FROM leads ORDER BY created DESC LIMIT 500
+            """)
+            leads = [
+                {"email": r[0], "url": r[1], "emailed": r[2], "created": r[3].isoformat()}
+                for r in cur.fetchall()
+            ]
+            cur.execute("SELECT COUNT(*) FROM leads")
+            total = cur.fetchone()[0]
+
+    return jsonify({"total_leads": total, "leads": leads})
